@@ -266,3 +266,30 @@ app.post('/attempts/rubric', { preHandler: app.authenticate }, async (req: any, 
 
 const port = Number(process.env.PORT ?? 3001);
 app.listen({ port, host: '0.0.0.0' });
+
+app.get('/attempts', { preHandler: app.authenticate }, async (req: any) => {
+  const userId = req.user?.sub as string;
+  const attempts = await prisma.attempt.findMany({
+    where: { userId },
+    orderBy: { submittedAt: 'desc' },
+    take: 50,
+    include: {
+      quiz: { include: { passage: { select: { id: true, title: true } } } },
+    },
+  });
+
+  return {
+    attempts: attempts.map((a) => ({
+      id: a.id,
+      submittedAt: a.submittedAt,
+      mcqScore: a.mcqScore,
+      mcqTotal: a.mcqTotal,
+      rubric: {
+        evidence: a.rubricEvidence,
+        reasoning: a.rubricReasoning,
+        style: a.rubricStyle,
+      },
+      passage: a.quiz.passage,
+    })),
+  };
+});

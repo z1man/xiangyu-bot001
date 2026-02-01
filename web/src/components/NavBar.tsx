@@ -9,6 +9,7 @@ export function NavBar() {
     <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 0' }}>
       <Link to="/">Home</Link>
       <Link to="/practice">Practice</Link>
+      <Link to="/history">History</Link>
       <div style={{ flex: 1 }} />
       {token ? (
         <button

@@ -101,3 +101,16 @@ export type AttemptDetail = {
 export async function getAttempt(attemptId: string) {
   return request<AttemptDetail>(`/attempts/${attemptId}`);
 }
+
+export type AttemptListItem = {
+  id: string;
+  submittedAt: string;
+  mcqScore: number;
+  mcqTotal: number;
+  rubric: { evidence: number | null; reasoning: number | null; style: number | null };
+  passage: { id: string; title: string };
+};
+
+export async function listAttempts() {
+  return request<{ attempts: AttemptListItem[] }>('/attempts');
+}

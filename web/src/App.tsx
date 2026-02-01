@@ -8,6 +8,7 @@ import { PracticePage } from './pages/Practice';
 import { QuizPage } from './pages/Quiz';
 import { RegisterPage } from './pages/Register';
 import { ResultPage } from './pages/Result';
+import { HistoryPage } from './pages/History';
 
 function RequireAuth({ children }: { children: React.ReactElement }) {
   const token = getToken();
@@ -45,6 +46,14 @@ export default function App() {
           element={
             <RequireAuth>
               <ResultPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/history"
+          element={
+            <RequireAuth>
+              <HistoryPage />
             </RequireAuth>
           }
         />

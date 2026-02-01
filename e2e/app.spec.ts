@@ -5,7 +5,7 @@ function randUser() {
   return { username: `user${n}`, password: `Passw0rd!${n}` };
 }
 
-test('end-to-end: register → practice → quiz → submit → rubric → review', async ({ page }) => {
+test('end-to-end: register → practice → quiz → submit → rubric → review → history', async ({ page }) => {
   const { username, password } = randUser();
 
   // Register
@@ -24,10 +24,7 @@ test('end-to-end: register → practice → quiz → submit → rubric → revie
   // Answer all questions (always choose A)
   const radios = page.locator('input[type="radio"]');
   const count = await radios.count();
-  // There are 10 questions x 4 choices = 40 radios.
   expect(count).toBeGreaterThanOrEqual(40);
-
-  // Click the first option (A) for each question by selecting every 4th radio.
   for (let i = 0; i < 40; i += 4) {
     await radios.nth(i).check();
   }
@@ -50,4 +47,16 @@ test('end-to-end: register → practice → quiz → submit → rubric → revie
   await expect(page.getByRole('heading', { name: 'Review' })).toBeVisible();
   await expect(page.getByText(/Q1\./)).toBeVisible();
   await expect(page.getByText(/Q10\./)).toBeVisible();
+
+  // Go to history
+  await page.getByRole('link', { name: 'History' }).click();
+  await expect(page.getByRole('heading', { name: 'History' })).toBeVisible();
+
+  // Should have at least one attempt
+  await expect(page.getByRole('button', { name: 'View' }).first()).toBeVisible();
+
+  // View should navigate back to result
+  await page.getByRole('button', { name: 'View' }).first().click();
+  await expect(page.getByRole('heading', { name: 'Result' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Review' })).toBeVisible();
 });
