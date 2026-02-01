@@ -1,4 +1,5 @@
-const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? 'http://localhost:3001';
+// Prefer 127.0.0.1 to avoid CORS mismatch when the web app is served on 127.0.0.1.
+const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? 'http://127.0.0.1:3001';
 
 export type Passage = { id: string; title: string; author?: string | null };
 
