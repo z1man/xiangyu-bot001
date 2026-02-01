@@ -18,7 +18,12 @@ const envSchema = z.object({
 
 envSchema.parse(process.env);
 
-await app.register(cors, { origin: process.env.CORS_ORIGIN, credentials: true });
+const corsOrigins = (process.env.CORS_ORIGIN ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+await app.register(cors, { origin: corsOrigins.length ? corsOrigins : true, credentials: true });
 await app.register(jwt, { secret: process.env.JWT_SECRET });
 
 app.get('/health', async () => ({ ok: true }));
