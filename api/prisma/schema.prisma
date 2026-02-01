@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum QuestionType {
+  MCQ
+}
+
+enum QuestionTag {
+  RHETORICAL_SITUATION
+  CLAIMS_EVIDENCE
+  REASONING
+  STYLE_TONE
+  ORGANIZATION
+  GRAMMAR_CONVENTIONS
+  OTHER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  quizzes   Quiz[]
+  attempts Attempt[]
+}
+
+model Passage {
+  id        String   @id @default(cuid())
+  title     String
+  author    String?
+  sourceUrl String?
+  license   String?
+  text      String
+  createdAt DateTime @default(now())
+
+  questions Question[]
+  quizzes   Quiz[]
+}
+
+model Question {
+  id          String       @id @default(cuid())
+  passageId   String
+  type        QuestionType @default(MCQ)
+  tag         QuestionTag  @default(OTHER)
+  difficulty  Int          @default(3)
+
+  stem        String
+  choiceA     String
+  choiceB     String
+  choiceC     String
+  choiceD     String
+  correct     String
+  explanation String?
+
+  createdAt DateTime @default(now())
+
+  passage   Passage     @relation(fields: [passageId], references: [id])
+  quizItems QuizItem[]
+  answers   AttemptAnswer[]
+
+  @@index([passageId])
+}
+
+model Quiz {
+  id        String   @id @default(cuid())
+  userId    String
+  passageId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  passage Passage @relation(fields: [passageId], references: [id])
+
+  items    QuizItem[]
+  attempts Attempt[]
+
+  @@index([userId])
+  @@index([passageId])
+}
+
+model QuizItem {
+  quizId     String
+  questionId String
+  position   Int
+
+  quiz     Quiz     @relation(fields: [quizId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@id([quizId, questionId])
+  @@index([quizId, position])
+}
+
+model Attempt {
+  id          String   @id @default(cuid())
+  quizId      String
+  userId      String
+  submittedAt DateTime @default(now())
+
+  mcqScore Int @default(0)
+  mcqTotal Int @default(0)
+
+  rubricEvidence  Int?
+  rubricReasoning Int?
+  rubricStyle     Int?
+  rubricNotes     String?
+
+  quiz     Quiz   @relation(fields: [quizId], references: [id])
+  user     User   @relation(fields: [userId], references: [id])
+  answers  AttemptAnswer[]
+
+  @@index([quizId])
+  @@index([userId])
+}
+
+model AttemptAnswer {
+  attemptId  String
+  questionId String
+
+  selected     String?
+  isCorrect    Boolean?
+  secondsSpent Int? @default(0)
+
+  attempt  Attempt  @relation(fields: [attemptId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@id([attemptId, questionId])
+}

@@ -1,0 +1,21 @@
+# OS
+.DS_Store
+
+# Node
+node_modules
+npm-debug.log*
+
+# Env
+.env
+
+# Vite
+web/dist
+
+# API build
+api/dist
+
+# Prisma
+api/prisma/dev.db
+
+# IDE
+.vscode
