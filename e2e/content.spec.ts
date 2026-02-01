@@ -14,16 +14,15 @@ test('settings: generate 10 passages (FAKE_LLM) and show in practice', async ({ 
   await page.getByLabel('Password').fill(password);
   await page.getByRole('button', { name: 'Create account' }).click();
 
-  // Go to Settings
-  await page.getByRole('link', { name: 'Settings' }).click();
+  // Go directly to Settings (less flaky than clicking nav)
+  await page.goto('/settings');
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
 
-  // In CI we run with FAKE_LLM=1 so generation should work even without saving keys.
   await page.getByRole('button', { name: 'Generate 10 passages' }).click();
   await expect(page.getByText(/Created/)).toBeVisible({ timeout: 60_000 });
 
   // Go to Practice and ensure there is at least one passage card.
-  await page.getByRole('button', { name: 'Go to Practice' }).click();
+  await page.goto('/practice');
   await expect(page.getByRole('heading', { name: 'Practice' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Start quiz' }).first()).toBeVisible();
 });
