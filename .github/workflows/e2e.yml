@@ -1,0 +1,73 @@
+name: e2e
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: ap_lang
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U app -d ap_lang"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install root dev deps
+        run: npm ci
+
+      - name: Install API deps
+        run: |
+          cd api
+          npm ci
+
+      - name: Install Web deps
+        run: |
+          cd web
+          npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare DB (migrate + seed)
+        env:
+          DATABASE_URL: postgresql://app:app@localhost:5432/ap_lang?schema=public
+          JWT_SECRET: ci_secret
+          CORS_ORIGIN: http://localhost:5173
+        run: |
+          cd api
+          cp .env.example .env
+          npm run prisma:migrate
+          npm run seed
+
+      - name: Start API + Web
+        env:
+          DATABASE_URL: postgresql://app:app@localhost:5432/ap_lang?schema=public
+          JWT_SECRET: ci_secret
+          CORS_ORIGIN: http://localhost:5173
+        run: |
+          (cd api && cp .env.example .env && npm run dev) &
+          (cd web && npm run dev -- --host 0.0.0.0 --port 5173) &
+          npx wait-on http://localhost:5173 --timeout 60000
+
+      - name: Run E2E
+        env:
+          E2E_BASE_URL: http://localhost:5173
+        run: npx playwright test
