@@ -75,3 +75,29 @@ export async function saveRubric(attemptId: string, evidence: number, reasoning:
     }
   );
 }
+
+export type AttemptDetail = {
+  attempt: {
+    id: string;
+    submittedAt: string;
+    mcqScore: number;
+    mcqTotal: number;
+    rubric: { evidence: number | null; reasoning: number | null; style: number | null; notes: string | null };
+  };
+  passage: { id: string; title: string; text: string };
+  questions: Array<{
+    id: string;
+    stem: string;
+    choices: { A: string; B: string; C: string; D: string };
+    selected: 'A' | 'B' | 'C' | 'D' | null;
+    correct: 'A' | 'B' | 'C' | 'D';
+    isCorrect: boolean | null;
+    explanation: string | null;
+    tag: string;
+    difficulty: number;
+  }>;
+};
+
+export async function getAttempt(attemptId: string) {
+  return request<AttemptDetail>(`/attempts/${attemptId}`);
+}

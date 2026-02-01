@@ -163,6 +163,66 @@ app.post('/attempts/submit', { preHandler: app.authenticate }, async (req: any, 
   return { attemptId: attempt.id, mcqScore: attempt.mcqScore, mcqTotal: attempt.mcqTotal };
 });
 
+app.get('/attempts/:id', { preHandler: app.authenticate }, async (req: any, reply) => {
+  const userId = req.user?.sub as string;
+  const attemptId = req.params.id as string;
+
+  const attempt = await prisma.attempt.findFirst({
+    where: { id: attemptId, userId },
+    include: {
+      quiz: {
+        include: {
+          passage: true,
+          items: { include: { question: true }, orderBy: { position: 'asc' } },
+        },
+      },
+      answers: true,
+    },
+  });
+
+  if (!attempt) return reply.code(404).send({ error: 'Attempt not found' });
+
+  const selectedByQ = new Map(attempt.answers.map((a) => [a.questionId, a.selected]));
+
+  return {
+    attempt: {
+      id: attempt.id,
+      submittedAt: attempt.submittedAt,
+      mcqScore: attempt.mcqScore,
+      mcqTotal: attempt.mcqTotal,
+      rubric: {
+        evidence: attempt.rubricEvidence,
+        reasoning: attempt.rubricReasoning,
+        style: attempt.rubricStyle,
+        notes: attempt.rubricNotes,
+      },
+    },
+    passage: {
+      id: attempt.quiz.passage.id,
+      title: attempt.quiz.passage.title,
+      text: attempt.quiz.passage.text,
+    },
+    questions: attempt.quiz.items.map((it) => ({
+      id: it.question.id,
+      stem: it.question.stem,
+      choices: {
+        A: it.question.choiceA,
+        B: it.question.choiceB,
+        C: it.question.choiceC,
+        D: it.question.choiceD,
+      },
+      selected: selectedByQ.get(it.question.id) ?? null,
+      correct: it.question.correct,
+      isCorrect: selectedByQ.get(it.question.id)
+        ? selectedByQ.get(it.question.id) === it.question.correct
+        : null,
+      explanation: it.question.explanation ?? null,
+      tag: it.question.tag,
+      difficulty: it.question.difficulty,
+    })),
+  };
+});
+
 const rubricBody = z.object({
   attemptId: z.string().min(1),
   evidence: z.number().int().min(0).max(5),
