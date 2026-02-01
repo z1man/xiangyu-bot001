@@ -57,6 +57,9 @@ model Passage {
 
   questions Question[]
   quizzes   Quiz[]
+
+  @@index([sourceUrl])
+  @@unique([sourceUrl])
 }
 
 model Question {
@@ -81,6 +84,7 @@ model Question {
   answers   AttemptAnswer[]
 
   @@index([passageId])
+  @@unique([passageId, stem, choiceA, choiceB, choiceC, choiceD])
 }
 
 model Quiz {

@@ -403,7 +403,9 @@ app.post('/content/generate', { preHandler: app.authenticate }, async (req: any,
   for (const s of selected) {
     const { title, text } = await fetchReadableText(s.url);
 
-    const passage = await prisma.passage.create({
+    const existingPassage = await prisma.passage.findUnique({ where: { sourceUrl: s.url } });
+
+    const passage = existingPassage ? existingPassage : await prisma.passage.create({
       data: {
         title,
         author: s.author ?? null,
@@ -423,6 +425,7 @@ app.post('/content/generate', { preHandler: app.authenticate }, async (req: any,
         ).then((j: any) => j.questions);
 
     await prisma.question.createMany({
+      skipDuplicates: true,
       data: questions.map((q: any) => ({
         passageId: passage.id,
         stem: q.stem,
