@@ -87,13 +87,8 @@ export function QuizPage() {
                 selected: answers[q.id] as 'A' | 'B' | 'C' | 'D',
               }));
               const res = await submitAttempt(quiz.id, payload);
-              nav('/result', {
-                state: {
-                  attemptId: res.attemptId,
-                  mcqScore: res.mcqScore,
-                  mcqTotal: res.mcqTotal,
-                },
-              });
+              // Go directly to canonical attempt page
+              nav(`/attempt/${res.attemptId}`);
             } catch (err: any) {
               setError(err.message ?? 'Failed to submit');
             } finally {
