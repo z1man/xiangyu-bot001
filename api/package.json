@@ -9,7 +9,8 @@
     "start": "node --enable-source-maps dist/server.js",
     "build": "tsc -p tsconfig.json",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "seed": "tsx scripts/seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +29,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^25.1.0",
     "prisma": "^7.3.0",
+    "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
