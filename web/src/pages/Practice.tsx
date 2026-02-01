@@ -2,12 +2,25 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createQuiz, listPassages } from '../lib/api';
 import type { Passage } from '../lib/api';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+
+function SkeletonCard() {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="h-5 w-2/3 animate-pulse rounded bg-slate-200" />
+      <div className="mt-3 h-4 w-1/3 animate-pulse rounded bg-slate-100" />
+      <div className="mt-6 h-10 w-28 animate-pulse rounded bg-slate-100" />
+    </div>
+  );
+}
 
 export function PracticePage() {
   const nav = useNavigate();
   const [passages, setPassages] = useState<Passage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -23,45 +36,78 @@ export function PracticePage() {
   }, []);
 
   return (
-    <div>
-      <h2>Practice</h2>
-      <p style={{ color: '#666' }}>Choose a passage. You will get a 10-question multiple-choice quiz.</p>
+    <div className="mx-auto max-w-5xl px-4 py-10">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-2xl font-semibold text-slate-900">Practice</h2>
+        <p className="text-sm text-slate-600">Choose a passage. You will get a 10-question multiple-choice quiz.</p>
+      </div>
 
-      {loading && <div>Loading…</div>}
-      {error && <div style={{ color: 'crimson' }}>{error}</div>}
+      {error && (
+        <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+      )}
 
-      {!loading && passages.length === 0 && (
-        <div>
-          <p>No passages found yet.</p>
-          <p style={{ color: '#666' }}>
-            Next step: we will add a seed script to import a public-domain/CC passage and generate 10 questions.
-          </p>
+      {loading && (
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 720 }}>
-        {passages.map((p) => (
-          <div key={p.id} style={{ border: '1px solid #ddd', padding: 12, borderRadius: 8 }}>
-            <div style={{ fontWeight: 600 }}>{p.title}</div>
-            {p.author && <div style={{ color: '#666' }}>by {p.author}</div>}
-            <div style={{ marginTop: 10 }}>
-              <button
-                onClick={async () => {
-                  setError(null);
-                  try {
-                    const quiz = await createQuiz(p.id);
-                    nav(`/quiz/${quiz.id}`, { state: { quiz } });
-                  } catch (err: any) {
-                    setError(err.message ?? 'Failed to create quiz');
-                  }
-                }}
-              >
-                Start quiz
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+      {!loading && passages.length === 0 && (
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>No passages found</CardTitle>
+              <CardDescription>
+                Add passages via Settings (Generate 10 passages) or ingest scripts. Then come back here.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex gap-2">
+              <Button variant="secondary" onClick={() => nav('/settings')}>
+                Go to Settings
+              </Button>
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Refresh
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {!loading && passages.length > 0 && (
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          {passages.map((p) => (
+            <Card key={p.id}>
+              <CardHeader>
+                <CardTitle className="line-clamp-2">{p.title}</CardTitle>
+                {p.author ? <CardDescription>by {p.author}</CardDescription> : <CardDescription> </CardDescription>}
+              </CardHeader>
+              <CardContent className="flex items-center justify-between gap-3">
+                <div className="text-xs text-slate-500">10 questions</div>
+                <Button
+                  disabled={creating === p.id}
+                  onClick={async () => {
+                    setError(null);
+                    setCreating(p.id);
+                    try {
+                      const quiz = await createQuiz(p.id);
+                      nav(`/quiz/${quiz.id}`, { state: { quiz } });
+                    } catch (err: any) {
+                      setError(err.message ?? 'Failed to create quiz');
+                    } finally {
+                      setCreating(null);
+                    }
+                  }}
+                >
+                  {creating === p.id ? 'Starting…' : 'Start quiz'}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
