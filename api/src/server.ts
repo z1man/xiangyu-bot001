@@ -23,6 +23,15 @@ await app.register(jwt, { secret: process.env.JWT_SECRET });
 
 app.get('/health', async () => ({ ok: true }));
 
+app.get('/passages', async () => {
+  const passages = await prisma.passage.findMany({
+    select: { id: true, title: true, author: true },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  });
+  return { passages };
+});
+
 const authBody = z.object({
   username: z.string().min(3).max(32),
   password: z.string().min(8).max(128),
