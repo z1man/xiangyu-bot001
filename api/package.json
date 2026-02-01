@@ -10,7 +10,9 @@
     "build": "tsc -p tsconfig.json",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "ingest10": "tsx scripts/ingest10.ts",
+    "cleanup:bad": "tsx scripts/cleanup_bad_passages.ts"
   },
   "keywords": [],
   "author": "",

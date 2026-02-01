@@ -1,13 +1,15 @@
-// A curated set of high-quality nonfiction passages suitable for AP Lang practice.
-// For now: URLs only; we fetch and extract readable text.
-// You can expand/replace this list anytime.
+// Source pool for automatic ingestion.
+// Using English Wikisource pages tends to be stable and readable (HTML) for extraction.
 
 export const PASSAGE_URL_POOL: Array<{ url: string; author?: string }> = [
-  // Public domain / government sources tend to be safest for redistribution.
-  { url: 'https://www.archives.gov/milestone-documents/president-john-f-kennedy-inaugural-address', author: 'John F. Kennedy' },
-  { url: 'https://www.archives.gov/milestone-documents/four-freedoms-speech', author: 'Franklin D. Roosevelt' },
-  { url: 'https://www.archives.gov/milestone-documents/letter-from-birmingham-jail', author: 'Martin Luther King Jr.' },
-  { url: 'https://www.archives.gov/milestone-documents/gettysburg-address', author: 'Abraham Lincoln' },
-  { url: 'https://www.archives.gov/milestone-documents/seneca-falls-declaration', author: 'Elizabeth Cady Stanton (et al.)' },
-  // Add more as needed.
+  { url: 'https://en.wikisource.org/wiki/Declaration_of_Independence_(United_States)', author: 'Continental Congress' },
+  { url: 'https://en.wikisource.org/wiki/Gettysburg_Address', author: 'Abraham Lincoln' },
+  { url: 'https://en.wikisource.org/wiki/Second_Inaugural_Address_of_Abraham_Lincoln', author: 'Abraham Lincoln' },
+  { url: 'https://en.wikisource.org/wiki/A_Modest_Proposal', author: 'Thomas Paine' },
+  { url: 'https://en.wikisource.org/wiki/The_American_Crisis/Number_I', author: 'Thomas Paine' },
+  { url: 'https://en.wikisource.org/wiki/Self-Reliance', author: 'Ralph Waldo Emerson' },
+  { url: 'https://en.wikisource.org/wiki/Civil_Disobedience', author: 'Henry David Thoreau' },
+  { url: 'https://en.wikisource.org/wiki/Federalist_No._10', author: 'James Madison' },
+  { url: 'https://en.wikisource.org/wiki/Women%27s_Rights_are_Human_Rights', author: 'Hillary Rodham Clinton' },
+  { url: 'https://en.wikisource.org/wiki/Letter_to_Horace_Greeley', author: 'Abraham Lincoln' },
 ];
