@@ -26,8 +26,7 @@ export function SettingsPage() {
   const [deployment, setDeployment] = useState('');
   const [apiVersion, setApiVersion] = useState('2024-02-01');
   const [apiKey, setApiKey] = useState('');
-
-  const [configured, setConfigured] = useState(false);
+  const [_configured, setConfigured] = useState(false);
   const [saving, setSaving] = useState(false);
   const [genLoading, setGenLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
