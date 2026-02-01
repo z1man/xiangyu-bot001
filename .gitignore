@@ -17,5 +17,9 @@ api/dist
 # Prisma
 api/prisma/dev.db
 
+# Playwright
+/test-results/
+/playwright-report/
+
 # IDE
 .vscode

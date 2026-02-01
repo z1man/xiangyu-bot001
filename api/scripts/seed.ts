@@ -17,11 +17,10 @@ Let every nation know, whether it wishes us well or ill, that we shall pay any p
 
 This much we pledge—and more.`;
 
-  const passage = await prisma.passage.upsert({
-    where: { title },
-    update: {},
-    create: { title, author, sourceUrl, license, text },
-  });
+  const existing = await prisma.passage.findFirst({ where: { title } });
+  const passage = existing
+    ? existing
+    : await prisma.passage.create({ data: { title, author, sourceUrl, license, text } });
 
   // 10 starter MCQs (handwritten placeholders for now).
   // Later we will generate these programmatically.
