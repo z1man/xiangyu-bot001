@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAttempt, listAttempts } from '../lib/api';
+import { listAttempts } from '../lib/api';
 import type { AttemptListItem } from '../lib/api';
 
 export function HistoryPage() {
@@ -45,21 +45,7 @@ export function HistoryPage() {
                   : 'Not saved'}
               </div>
               <div style={{ marginTop: 10, display: 'flex', gap: 10 }}>
-                <button
-                  onClick={async () => {
-                    // Navigate to Result page with attempt details (reusing Result UI)
-                    const d = await getAttempt(a.id);
-                    nav('/result', {
-                      state: {
-                        attemptId: d.attempt.id,
-                        mcqScore: d.attempt.mcqScore,
-                        mcqTotal: d.attempt.mcqTotal,
-                      },
-                    });
-                  }}
-                >
-                  View
-                </button>
+                <button onClick={() => nav(`/attempt/${a.id}`)}>View</button>
               </div>
             </div>
           );
