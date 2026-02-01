@@ -10,6 +10,7 @@ export function NavBar() {
       <Link to="/">Home</Link>
       <Link to="/practice">Practice</Link>
       <Link to="/history">History</Link>
+      <Link to="/settings">Settings</Link>
       <div style={{ flex: 1 }} />
       {token ? (
         <button

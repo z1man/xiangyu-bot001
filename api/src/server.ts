@@ -5,6 +5,11 @@ import * as bcrypt from 'bcrypt';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import 'dotenv/config';
+import { encryptSecret, decryptSecret } from './crypto.js';
+import { fetchReadableText } from './passageFetch.js';
+import { PASSAGE_URL_POOL } from './contentSources.js';
+import { fakeGenerateQuestions } from './fakeGenerator.js';
+import { azureChatJSON } from './azureOpenAI.js';
 
 const prisma = new PrismaClient();
 
@@ -14,6 +19,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(1),
   CORS_ORIGIN: z.string().min(1),
+  APP_ENC_KEY: z.string().min(1),
+  FAKE_LLM: z.string().optional(),
 });
 
 envSchema.parse(process.env);
@@ -24,7 +31,7 @@ const corsOrigins = (process.env.CORS_ORIGIN ?? '')
   .filter(Boolean);
 
 await app.register(cors, { origin: corsOrigins.length ? corsOrigins : true, credentials: true });
-await app.register(jwt, { secret: process.env.JWT_SECRET });
+await app.register(jwt, { secret: process.env.JWT_SECRET! });
 
 app.get('/health', async () => ({ ok: true }));
 
@@ -42,7 +49,7 @@ const authBody = z.object({
   password: z.string().min(8).max(128),
 });
 
-type AuthedRequest = Parameters<Parameters<typeof app.decorate>[1]>[0];
+// (unused type removed)
 
 app.decorate('authenticate', async (request: any, reply: any) => {
   try {
@@ -292,4 +299,129 @@ app.get('/attempts', { preHandler: app.authenticate }, async (req: any) => {
       passage: a.quiz.passage,
     })),
   };
+});
+
+const llmConfigBody = z.object({
+  endpoint: z.string().url(),
+  deployment: z.string().min(1),
+  apiVersion: z.string().min(1).default('2024-02-01'),
+  apiKey: z.string().min(1),
+});
+
+app.get('/settings/llm', { preHandler: app.authenticate }, async (req: any) => {
+  const userId = req.user?.sub as string;
+  const cfg = await prisma.userLlmConfig.findUnique({ where: { userId } });
+  if (!cfg) return { configured: false };
+  return {
+    configured: true,
+    provider: cfg.provider,
+    endpoint: cfg.endpoint,
+    deployment: cfg.deployment,
+    apiVersion: cfg.apiVersion,
+    // Never return the API key
+  };
+});
+
+app.post('/settings/llm', { preHandler: app.authenticate }, async (req: any) => {
+  const userId = req.user?.sub as string;
+  const body = llmConfigBody.parse(req.body);
+
+  const cfg = await prisma.userLlmConfig.upsert({
+    where: { userId },
+    create: {
+      userId,
+      provider: 'azure_openai',
+      endpoint: body.endpoint,
+      deployment: body.deployment,
+      apiVersion: body.apiVersion,
+      apiKeyEnc: encryptSecret(body.apiKey),
+    },
+    update: {
+      endpoint: body.endpoint,
+      deployment: body.deployment,
+      apiVersion: body.apiVersion,
+      apiKeyEnc: encryptSecret(body.apiKey),
+    },
+  });
+
+  return {
+    ok: true,
+    configured: true,
+    provider: cfg.provider,
+    endpoint: cfg.endpoint,
+    deployment: cfg.deployment,
+    apiVersion: cfg.apiVersion,
+  };
+});
+
+const generateBody = z.object({
+  count: z.number().int().min(1).max(20).default(10),
+});
+
+app.post('/content/generate', { preHandler: app.authenticate }, async (req: any, reply) => {
+  const userId = req.user?.sub as string;
+  const body = generateBody.parse(req.body ?? {});
+
+  // If not using FAKE_LLM, require user config
+  let cfg: any = null;
+  if (process.env.FAKE_LLM !== '1') {
+    const saved = await prisma.userLlmConfig.findUnique({ where: { userId } });
+    if (!saved) return reply.code(400).send({ error: 'LLM is not configured. Go to Settings and enter your Azure OpenAI endpoint/key.' });
+    cfg = {
+      endpoint: saved.endpoint,
+      deployment: saved.deployment,
+      apiVersion: saved.apiVersion,
+      apiKey: decryptSecret(saved.apiKeyEnc),
+    };
+  }
+
+  // pick unique URLs
+  const pool = PASSAGE_URL_POOL.slice();
+  if (pool.length < body.count) return reply.code(400).send({ error: `Not enough passage sources in pool (have ${pool.length}, need ${body.count})` });
+
+  const selected = pool.sort(() => Math.random() - 0.5).slice(0, body.count);
+
+  const created: Array<{ passageId: string; title: string; questions: number }> = [];
+
+  for (const s of selected) {
+    const { title, text } = await fetchReadableText(s.url);
+
+    const passage = await prisma.passage.create({
+      data: {
+        title,
+        author: s.author ?? null,
+        sourceUrl: s.url,
+        license: 'unknown',
+        text,
+      },
+    });
+
+    const questions = process.env.FAKE_LLM === '1'
+      ? fakeGenerateQuestions(text)
+      : await azureChatJSON<any>(
+          cfg,
+          'You are an AP English Language & Composition question writer. Create high-quality multiple-choice questions that test rhetorical analysis, claims/evidence, reasoning, style/tone, and organization. Return ONLY JSON.',
+          `Given the passage below, generate exactly 10 MCQ questions. Each question must have 4 choices (A,B,C,D), one correct choice, a brief explanation, a tag, and difficulty (1-5).\n\nPassage:\n${text}`,
+          '{ "questions": [{"stem":"string","choices":{"A":"string","B":"string","C":"string","D":"string"},"correct":"A|B|C|D","explanation":"string","tag":"RHETORICAL_SITUATION|CLAIMS_EVIDENCE|REASONING|STYLE_TONE|ORGANIZATION|GRAMMAR_CONVENTIONS|OTHER","difficulty":1}] }'
+        ).then((j: any) => j.questions);
+
+    await prisma.question.createMany({
+      data: questions.map((q: any) => ({
+        passageId: passage.id,
+        stem: q.stem,
+        choiceA: q.choices.A,
+        choiceB: q.choices.B,
+        choiceC: q.choices.C,
+        choiceD: q.choices.D,
+        correct: q.correct,
+        explanation: q.explanation ?? null,
+        tag: q.tag ?? 'OTHER',
+        difficulty: q.difficulty ?? 3,
+      })),
+    });
+
+    created.push({ passageId: passage.id, title: passage.title, questions: questions.length });
+  }
+
+  return { created };
 });

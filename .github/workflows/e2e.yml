@@ -51,6 +51,8 @@ jobs:
           DATABASE_URL: postgresql://app:app@localhost:5432/ap_lang?schema=public
           JWT_SECRET: ci_secret
           CORS_ORIGIN: http://localhost:5173
+          APP_ENC_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          FAKE_LLM: "1"
         run: |
           cd api
           cp .env.example .env
@@ -62,6 +64,8 @@ jobs:
           DATABASE_URL: postgresql://app:app@localhost:5432/ap_lang?schema=public
           JWT_SECRET: ci_secret
           CORS_ORIGIN: http://localhost:5173
+          APP_ENC_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          FAKE_LLM: "1"
         run: |
           (cd api && cp .env.example .env && npm run dev) &
           (cd web && npm run dev -- --host 0.0.0.0 --port 5173) &

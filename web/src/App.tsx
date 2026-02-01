@@ -9,6 +9,8 @@ import { QuizPage } from './pages/Quiz';
 import { RegisterPage } from './pages/Register';
 import { ResultPage } from './pages/Result';
 import { HistoryPage } from './pages/History';
+import { AttemptPage } from './pages/Attempt';
+import { SettingsPage } from './pages/Settings';
 
 function RequireAuth({ children }: { children: React.ReactElement }) {
   const token = getToken();
@@ -54,6 +56,22 @@ export default function App() {
           element={
             <RequireAuth>
               <HistoryPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/attempt/:attemptId"
+          element={
+            <RequireAuth>
+              <AttemptPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <RequireAuth>
+              <SettingsPage />
             </RequireAuth>
           }
         />
