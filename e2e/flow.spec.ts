@@ -31,9 +31,10 @@ test('end-to-end: register → practice → quiz → submit → attempt page →
 
   await page.getByRole('button', { name: 'Submit' }).click();
 
-  // Should redirect to Attempt page
+  // Attempt page
   await expect(page.getByRole('heading', { name: 'Attempt' })).toBeVisible();
-  await expect(page.getByText(/MCQ score:/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Score' })).toBeVisible();
+  await expect(page.getByText(/% correct/)).toBeVisible();
 
   // Save rubric
   await page.getByLabel('Evidence').fill('4');

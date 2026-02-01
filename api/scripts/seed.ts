@@ -137,24 +137,24 @@ This much we pledge—and more.`;
     },
   ];
 
-  // Ensure we have exactly these 10 questions for this passage (idempotent-ish)
-  // For MVP: delete existing questions for this passage, then recreate.
-  await prisma.question.deleteMany({ where: { passageId: passage.id } });
-
-  await prisma.question.createMany({
-    data: qs.map((q) => ({
-      passageId: passage.id,
-      stem: q.stem,
-      choiceA: q.A,
-      choiceB: q.B,
-      choiceC: q.C,
-      choiceD: q.D,
-      correct: q.correct,
-      tag: q.tag,
-      difficulty: q.difficulty,
-      explanation: q.explanation,
-    })),
-  });
+  // Idempotent seed: only create questions if none exist for this passage.
+  const existingCount = await prisma.question.count({ where: { passageId: passage.id } });
+  if (existingCount === 0) {
+    await prisma.question.createMany({
+      data: qs.map((q) => ({
+        passageId: passage.id,
+        stem: q.stem,
+        choiceA: q.A,
+        choiceB: q.B,
+        choiceC: q.C,
+        choiceD: q.D,
+        correct: q.correct,
+        tag: q.tag,
+        difficulty: q.difficulty,
+        explanation: q.explanation,
+      })),
+    });
+  }
 
   console.log('Seed completed:', { passageId: passage.id, questions: qs.length });
 }

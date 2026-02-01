@@ -157,8 +157,8 @@ export function AttemptPage() {
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium text-slate-700">Evidence</label>
-                    <Input
+                    <label htmlFor="evidence" className="text-sm font-medium text-slate-700">Evidence</label>
+                    <Input id="evidence"
                       type="number"
                       min={0}
                       max={5}
@@ -167,8 +167,8 @@ export function AttemptPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium text-slate-700">Reasoning</label>
-                    <Input
+                    <label htmlFor="reasoning" className="text-sm font-medium text-slate-700">Reasoning</label>
+                    <Input id="reasoning"
                       type="number"
                       min={0}
                       max={5}
@@ -177,8 +177,8 @@ export function AttemptPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium text-slate-700">Style</label>
-                    <Input
+                    <label htmlFor="style" className="text-sm font-medium text-slate-700">Style</label>
+                    <Input id="style"
                       type="number"
                       min={0}
                       max={5}
@@ -189,8 +189,8 @@ export function AttemptPage() {
                 </div>
 
                 <div className="mt-4 grid gap-2">
-                  <label className="text-sm font-medium text-slate-700">Notes (optional)</label>
-                  <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} />
+                  <label htmlFor="notes" className="text-sm font-medium text-slate-700">Notes (optional)</label>
+                  <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} />
                 </div>
 
                 <div className="mt-4 flex items-center gap-3">

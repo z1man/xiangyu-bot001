@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register, setToken } from '../lib/api';
 import { Button } from '../components/ui/button';
@@ -7,6 +7,9 @@ import { Input } from '../components/ui/input';
 
 export function RegisterPage() {
   const nav = useNavigate();
+  const userId = useId();
+  const passId = useId();
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -38,12 +41,17 @@ export function RegisterPage() {
             }}
           >
             <div className="grid gap-2">
-              <label className="text-sm font-medium text-slate-700">Username</label>
-              <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. neo" />
+              <label htmlFor={userId} className="text-sm font-medium text-slate-700">
+                Username
+              </label>
+              <Input id={userId} value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. neo" />
             </div>
             <div className="grid gap-2">
-              <label className="text-sm font-medium text-slate-700">Password</label>
+              <label htmlFor={passId} className="text-sm font-medium text-slate-700">
+                Password
+              </label>
               <Input
+                id={passId}
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
