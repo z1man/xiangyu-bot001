@@ -14,7 +14,10 @@ test('settings: generate 10 passages (FAKE_LLM) and show in practice', async ({ 
   await page.getByLabel('Password').fill(password);
   await page.getByRole('button', { name: 'Create account' }).click();
 
-  // Go directly to Settings (less flaky than clicking nav)
+  // Ensure we are authenticated (token stored) and routed to Practice
+  await expect(page.getByRole('heading', { name: 'Practice' })).toBeVisible();
+
+  // Go to Settings
   await page.goto('/settings');
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
 
