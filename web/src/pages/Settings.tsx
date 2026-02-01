@@ -31,7 +31,6 @@ export function SettingsPage() {
   const [apiVersion, setApiVersion] = useState('2024-02-01');
   const [apiKey, setApiKey] = useState('');
 
-  const [_configured, setConfigured] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [genLoading, setGenLoading] = useState(false);
@@ -45,7 +44,6 @@ export function SettingsPage() {
       try {
         const res = await authedFetch('/settings/llm');
         if (res.configured) {
-          setConfigured(true);
           setEndpoint(res.endpoint ?? '');
           setDeployment(res.deployment ?? '');
           setApiVersion(res.apiVersion ?? '2024-02-01');
@@ -69,9 +67,7 @@ export function SettingsPage() {
         <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
       )}
       {okMsg && (
-        <div className="mt-6 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-          {okMsg}
-        </div>
+        <div className="mt-6 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{okMsg}</div>
       )}
 
       <div className="mt-8 grid gap-4">
@@ -79,7 +75,7 @@ export function SettingsPage() {
           <CardHeader>
             <CardTitle>Azure OpenAI</CardTitle>
             <CardDescription>
-              Your API key is stored encrypted on the server. It will never be shown back in the UI.
+              Saving will run a test call to verify endpoint, deployment, API version, and key.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -98,15 +94,13 @@ export function SettingsPage() {
                 <Input
                   value={deployment}
                   onChange={(e) => setDeployment(e.target.value)}
-                  placeholder="gpt-4o-mini"
+                  placeholder="my-deployment"
                   disabled={loading}
                 />
+                <div className="text-xs text-slate-500">Azure OpenAI uses deployment name (not model name).</div>
               </div>
-              <div className="grid gap-2">
-                <label className="text-sm font-medium text-slate-700">API version</label>
-                <Input value={apiVersion} onChange={(e) => setApiVersion(e.target.value)} disabled={loading} />
-              </div>
-              <div className="grid gap-2">
+
+              <div className="grid gap-2 sm:col-span-2">
                 <label className="text-sm font-medium text-slate-700">API key</label>
                 <Input
                   type="password"
@@ -115,9 +109,22 @@ export function SettingsPage() {
                   placeholder="Paste your key"
                   disabled={loading}
                 />
-                <div className="text-xs text-slate-500">Leave blank to keep the existing key (recommended).</div>
+                <div className="text-xs text-slate-500">
+                  If you already saved a key before, you can leave this blank to keep the existing key.
+                </div>
               </div>
             </div>
+
+            <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <summary className="cursor-pointer text-sm font-medium text-slate-900">Advanced</summary>
+              <div className="mt-3 grid gap-2">
+                <label className="text-sm font-medium text-slate-700">API version</label>
+                <Input value={apiVersion} onChange={(e) => setApiVersion(e.target.value)} disabled={loading} />
+                <div className="text-xs text-slate-500">
+                  Azure OpenAI REST requires api-version. If you are unsure, keep the default.
+                </div>
+              </div>
+            </details>
 
             <div className="mt-4 flex items-center gap-2">
               <Button
@@ -127,14 +134,9 @@ export function SettingsPage() {
                   setOkMsg(null);
                   setSaving(true);
                   try {
-                    if (!apiKey) {
-                      setError('Please enter an API key (or keep the existing one by not changing settings).');
-                      return;
-                    }
                     await authedFetch('/settings/llm', { endpoint, deployment, apiVersion, apiKey });
-                    setConfigured(true);
                     setApiKey('');
-                    setOkMsg('Saved.');
+                    setOkMsg('Saved and verified.');
                   } catch (e: any) {
                     setError(e.message ?? 'Failed to save');
                   } finally {
@@ -142,7 +144,7 @@ export function SettingsPage() {
                   }
                 }}
               >
-                {saving ? 'Saving…' : 'Save'}
+                {saving ? 'Saving…' : 'Save (test connection)'}
               </Button>
               <Button variant="outline" disabled={loading} onClick={() => window.location.reload()}>
                 Refresh

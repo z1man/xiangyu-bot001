@@ -9,7 +9,7 @@ import { encryptSecret, decryptSecret } from './crypto.js';
 import { fetchReadableText } from './passageFetch.js';
 import { PASSAGE_URL_POOL } from './contentSources.js';
 import { fakeGenerateQuestions } from './fakeGenerator.js';
-import { azureChatJSON } from './azureOpenAI.js';
+import { azureChatJSON, azurePing } from './azureOpenAI.js';
 
 const prisma = new PrismaClient();
 
@@ -322,9 +322,26 @@ app.get('/settings/llm', { preHandler: app.authenticate }, async (req: any) => {
   };
 });
 
-app.post('/settings/llm', { preHandler: app.authenticate }, async (req: any) => {
+app.post('/settings/llm', { preHandler: app.authenticate }, async (req: any, reply) => {
   const userId = req.user?.sub as string;
   const body = llmConfigBody.parse(req.body);
+
+  // Allow blank apiKey to keep existing key.
+  const existing = await prisma.userLlmConfig.findUnique({ where: { userId } });
+  const apiKeyPlain = body.apiKey?.trim() ? body.apiKey : existing ? decryptSecret(existing.apiKeyEnc) : null;
+  if (!apiKeyPlain) return reply.code(400).send({ error: 'API key is required.' });
+
+  // Test call (skip in FAKE_LLM)
+  try {
+    await azurePing({
+      endpoint: body.endpoint,
+      deployment: body.deployment,
+      apiVersion: body.apiVersion,
+      apiKey: apiKeyPlain,
+    });
+  } catch (e: any) {
+    return reply.code(400).send({ error: e?.message ?? 'Azure OpenAI test call failed' });
+  }
 
   const cfg = await prisma.userLlmConfig.upsert({
     where: { userId },
@@ -334,13 +351,13 @@ app.post('/settings/llm', { preHandler: app.authenticate }, async (req: any) => 
       endpoint: body.endpoint,
       deployment: body.deployment,
       apiVersion: body.apiVersion,
-      apiKeyEnc: encryptSecret(body.apiKey),
+      apiKeyEnc: encryptSecret(apiKeyPlain),
     },
     update: {
       endpoint: body.endpoint,
       deployment: body.deployment,
       apiVersion: body.apiVersion,
-      apiKeyEnc: encryptSecret(body.apiKey),
+      apiKeyEnc: encryptSecret(apiKeyPlain),
     },
   });
 
